@@ -1,0 +1,119 @@
+{
+  "engineering": {
+    "default_tags": ["engineering"],
+    "postmortem_signals": [
+      "postmortem",
+      "post-mortem",
+      "incident",
+      "issue analysis",
+      "root cause",
+      "outage"
+    ]
+  },
+  "research": {
+    "retained_categories": {
+      "alignment": {
+        "category_signal": "alignment",
+        "text_signals": [
+          "alignment",
+          "misalignment",
+          "constitutional ai",
+          "model welfare",
+          "sycophancy"
+        ]
+      },
+      "interpretability": {
+        "category_signal": "interpretability",
+        "text_signals": [
+          "interpretability",
+          "circuits",
+          "monosemanticity",
+          "feature steering"
+        ]
+      },
+      "economic-research": {
+        "category_signal": "economic research",
+        "text_signals": [
+          "economic research",
+          "economic index",
+          "labor market",
+          "productivity"
+        ]
+      },
+      "societal-impacts": {
+        "category_signal": "societal impacts",
+        "text_signals": [
+          "societal impacts",
+          "elections",
+          "political bias",
+          "values in the wild"
+        ]
+      },
+      "frontier-red-team": {
+        "category_signal": "frontier red team",
+        "text_signals": [
+          "frontier red team",
+          "red team",
+          "red-teaming"
+        ]
+      },
+      "science": {
+        "category_signal": "science",
+        "text_signals": [
+          "science",
+          "biology",
+          "bioinformatics",
+          "chemist",
+          "scientific computing"
+        ]
+      }
+    }
+  },
+  "news": {
+    "signal_tags": {
+      "ai safety": ["ai-risk"],
+      "responsible scaling": ["policy", "ai-risk"],
+      "frontier model security": ["security", "ai-risk"],
+      "frontier threat": ["frontier-red-team", "ai-risk"],
+      "red team": ["frontier-red-team"],
+      "red-teaming": ["frontier-red-team"],
+      "cyber": ["security"],
+      "biosecurity": ["security", "ai-risk"],
+      "nuclear safeguards": ["security", "ai-risk"],
+      "misuse": ["security"],
+      "malicious use": ["security"],
+      "distillation attack": ["security"],
+      "election": ["policy", "societal-impacts"],
+      "transparency": ["policy"],
+      "accountability": ["policy"],
+      "regulation": ["policy"],
+      "ai harms": ["policy", "ai-risk"],
+      "constitutional": ["ai-risk"],
+      "political bias": ["societal-impacts"],
+      "economic index": ["economic-research"],
+      "education report": ["societal-impacts"],
+      "how people use claude": ["societal-impacts"]
+    },
+    "filtered_types": [
+      "product announcement",
+      "model release",
+      "pricing",
+      "download",
+      "partnership",
+      "customer story",
+      "case study",
+      "enterprise deployment",
+      "funding",
+      "office opening",
+      "hiring",
+      "appointment",
+      "company announcement",
+      "event announcement",
+      "acquisition",
+      "terms",
+      "privacy policy",
+      "availability",
+      "launch announcement"
+    ]
+  }
+}

@@ -1,0 +1,15 @@
+[project]
+name = "AnthropicBlog2Notion"
+version = "0.1.0"
+description = "Sync filtered Anthropic blog articles to Notion with AI translation."
+readme = "README.md"
+requires-python = ">=3.11"
+license = { text = "MIT" }
+authors = [{ name = "BurningSky0306" }]
+dependencies = [
+  "beautifulsoup4>=4.12",
+  "requests>=2.31",
+]
+
+[tool.setuptools.packages.find]
+where = ["src"]
