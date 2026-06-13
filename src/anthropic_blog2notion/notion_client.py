@@ -56,7 +56,7 @@ class NotionClient:
                 response = self.session.request(method, NOTION_API_BASE + path, timeout=60, **kwargs)
             except (requests.Timeout, requests.ConnectionError) as exc:
                 if attempt == self.max_retries:
-                    raise NotionError(f"Notion request failed after retries: {path}") from exc
+                    raise NotionError(f"Notion request failed after retries: {redact_path(path)}") from exc
                 time.sleep(self.retry_delay(attempt))
                 continue
             if response.status_code in {429, 529} and attempt < self.max_retries:
@@ -66,9 +66,9 @@ class NotionClient:
                 time.sleep(float(response.headers.get("Retry-After", str(self.retry_delay(attempt)))))
                 continue
             if response.status_code >= 400:
-                raise NotionError(f"Notion API {response.status_code} for {path}: {response.text[:1000]}")
+                raise NotionError(response_error_summary("Notion API", response, path))
             return response.json()
-        raise NotionError(f"Notion request failed after retries: {path}")
+        raise NotionError(f"Notion request failed after retries: {redact_path(path)}")
 
     def wait_for_rate_limit(self) -> None:
         if self.min_request_interval_seconds <= 0:
@@ -164,3 +164,12 @@ def first_markdown_image_url(markdown: str) -> str:
         if urlparse(url).scheme in {"http", "https"}:
             return url
     return ""
+
+
+def response_error_summary(service: str, response: requests.Response, path: str) -> str:
+    request_id = response.headers.get("x-request-id") or "unknown"
+    return f"{service} {response.status_code} for {redact_path(path)} (request_id={request_id})"
+
+
+def redact_path(path: str) -> str:
+    return re.sub(r"/[0-9A-Za-z_-]{20,}", "/<id>", path)

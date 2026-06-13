@@ -131,7 +131,7 @@ class AIClient:
                 time.sleep(float(response.headers.get("Retry-After", str(self.retry_delay(attempt)))))
                 continue
             if response.status_code >= 400:
-                raise AIError(f"AI API {response.status_code}: {response.text[:1000]}")
+                raise AIError(response_error_summary("AI API", response))
             choice = response.json()["choices"][0]
             if choice.get("finish_reason") == "length":
                 raise AIError(
@@ -149,6 +149,11 @@ class AIClient:
 
     def retry_delay(self, attempt: int) -> float:
         return min(60.0, self.retry_base_delay_seconds * (2 ** (attempt - 1)))
+
+
+def response_error_summary(service: str, response: requests.Response) -> str:
+    request_id = response.headers.get("x-request-id") or response.headers.get("x-ds-request-id") or "unknown"
+    return f"{service} {response.status_code} (request_id={request_id})"
 
 
 def strip_json_fences(text: str) -> str:
