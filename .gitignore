@@ -7,5 +7,3 @@ __pycache__/
 *.egg-info/
 *.pyc
 
-# Local-only legacy archive (never published)
-_legacy_local_blog_archive_2026-06-13/
