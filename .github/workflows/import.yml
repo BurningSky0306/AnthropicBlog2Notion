@@ -17,6 +17,9 @@ on:
         type: number
         default: 0
 
+permissions:
+  contents: read
+
 jobs:
   import:
     runs-on: ubuntu-latest
