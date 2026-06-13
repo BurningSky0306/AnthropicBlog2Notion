@@ -87,7 +87,7 @@ Anthropic 官网 sitemap
 | --- | --- | --- |
 | `NOTION_DATABASE_ID` | 目标数据库 ID | 第 1 步数据库 URL 里那段 32 位字符 |
 | `AI_BASE_URL` | AI 接口地址 | 例如 `https://api.deepseek.com` |
-| `AI_MODEL` | 模型名 | 例如 `deepseek-chat` |
+| `AI_MODEL` | 模型名 | 例如 `deepseek-v4-pro` |
 
 #### 可选项（均为 Variables，有默认值，不填即用默认）
 
