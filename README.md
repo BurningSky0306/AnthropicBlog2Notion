@@ -59,7 +59,7 @@ Anthropic 官网 sitemap
 
 - 接口地址 `AI_BASE_URL`（例如 `https://api.deepseek.com`）
 - API 密钥 `AI_API_KEY`
-- 模型名 `AI_MODEL`（例如 `deepseek-chat`）
+- 模型名 `AI_MODEL`（例如 `deepseek-v4-pro`）
 
 ### 第 3 步：Fork 本仓库
 
