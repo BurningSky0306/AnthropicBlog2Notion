@@ -5,8 +5,12 @@
       "postmortem",
       "post-mortem",
       "incident",
+      "incident review",
       "issue analysis",
       "root cause",
+      "root-cause",
+      "retrospective",
+      "lessons learned",
       "outage"
     ]
   },
@@ -18,6 +22,9 @@
           "alignment",
           "misalignment",
           "constitutional ai",
+          "scalable oversight",
+          "reward hacking",
+          "alignment faking",
           "model welfare",
           "sycophancy"
         ]
@@ -28,7 +35,10 @@
           "interpretability",
           "circuits",
           "monosemanticity",
-          "feature steering"
+          "sparse autoencoder",
+          "superposition",
+          "feature steering",
+          "persona vectors"
         ]
       },
       "economic-research": {
@@ -36,6 +46,7 @@
         "text_signals": [
           "economic research",
           "economic index",
+          "economic futures",
           "labor market",
           "productivity"
         ]
@@ -46,7 +57,9 @@
           "societal impacts",
           "elections",
           "political bias",
-          "values in the wild"
+          "values in the wild",
+          "how people use claude",
+          "education report"
         ]
       },
       "frontier-red-team": {
@@ -57,63 +70,121 @@
           "red-teaming"
         ]
       },
-      "science": {
-        "category_signal": "science",
+      "safety-research": {
+        "category_signal": "safeguards",
         "text_signals": [
-          "science",
-          "biology",
-          "bioinformatics",
-          "chemist",
-          "scientific computing"
+          "biosecurity",
+          "bioweapon",
+          "cbrn",
+          "dangerous capabilities",
+          "universal jailbreak",
+          "jailbreak",
+          "constitutional classifiers",
+          "frontier safety",
+          "safety evaluation"
         ]
       }
     }
   },
   "news": {
     "signal_tags": {
-      "ai safety": ["ai-risk"],
+      "responsible scaling policy": ["policy", "ai-risk"],
       "responsible scaling": ["policy", "ai-risk"],
+      "transparency framework": ["policy"],
+      "transparency hub": ["policy"],
+      "transparency report": ["policy"],
+      "secure development framework": ["policy", "ai-risk"],
       "frontier model security": ["security", "ai-risk"],
-      "frontier threat": ["frontier-red-team", "ai-risk"],
-      "red team": ["frontier-red-team"],
-      "red-teaming": ["frontier-red-team"],
-      "cyber": ["security"],
-      "biosecurity": ["security", "ai-risk"],
-      "nuclear safeguards": ["security", "ai-risk"],
-      "misuse": ["security"],
-      "malicious use": ["security"],
-      "distillation attack": ["security"],
-      "election": ["policy", "societal-impacts"],
-      "transparency": ["policy"],
-      "accountability": ["policy"],
+      "frontier red team": ["frontier-red-team", "ai-risk"],
+      "public record": ["policy", "societal-impacts"],
+      "public input": ["policy"],
       "regulation": ["policy"],
-      "ai harms": ["policy", "ai-risk"],
-      "constitutional": ["ai-risk"],
+      "accountability": ["policy"],
+      "liability": ["policy"],
+      "election": ["policy", "societal-impacts"],
       "political bias": ["societal-impacts"],
       "economic index": ["economic-research"],
+      "economic futures": ["economic-research"],
       "education report": ["societal-impacts"],
-      "how people use claude": ["societal-impacts"]
+      "how people use claude": ["societal-impacts"],
+      "values in the wild": ["societal-impacts"],
+      "cyber threats": ["security", "safety-research"],
+      "harmful manipulation": ["ai-risk", "safety-research"],
+      "constitutional classifiers": ["safety-research", "ai-risk"],
+      "universal jailbreak": ["safety-research", "ai-risk"],
+      "biosecurity": ["security", "ai-risk"],
+      "nuclear safeguards": ["security", "ai-risk"]
     },
     "filtered_types": [
       "product announcement",
       "model release",
+      "launch announcement",
+      "launch",
+      "introducing",
+      "available today",
+      "generally available",
+      "availability",
       "pricing",
       "download",
       "partnership",
+      "partner",
+      "collaboration",
       "customer story",
       "case study",
       "enterprise deployment",
       "funding",
+      "valuation",
       "office opening",
       "hiring",
       "appointment",
       "company announcement",
       "event announcement",
       "acquisition",
+      "rollout",
+      "early access",
+      "waitlist",
       "terms",
-      "privacy policy",
-      "availability",
-      "launch announcement"
+      "privacy policy"
+    ]
+  },
+  "blog": {
+    "signal_tags": {
+      "best practices": ["engineering"],
+      "prompt engineering": ["engineering"],
+      "context engineering": ["engineering"],
+      "lessons learned": ["engineering"],
+      "lessons from building": ["engineering"],
+      "ai-native engineering": ["engineering"],
+      "engineering org": ["engineering"],
+      "observability": ["engineering"],
+      "postmortem": ["engineering", "postmortem"],
+      "incident review": ["engineering", "postmortem"],
+      "zero trust": ["security"],
+      "secure source code": ["security"],
+      "secure development": ["security"],
+      "vulnerability": ["security"],
+      "security program": ["security"],
+      "ai-accelerated offense": ["security"],
+      "threat model": ["security"],
+      "red team": ["security"]
+    },
+    "filtered_types": [
+      "introducing",
+      "announcing",
+      "now available",
+      "available now",
+      "new in",
+      "what's new",
+      "redesign",
+      "product guide",
+      "getting started",
+      "pricing",
+      "cowork",
+      "connector",
+      "connectors",
+      "partnership",
+      "webinar",
+      "event"
     ]
   }
 }

@@ -45,6 +45,11 @@ def validate_classifier_rules(rules: dict, rules_path: Path) -> None:
         raise ValueError(f"{rules_path} news.signal_tags must be an object")
     if not isinstance(rules["news"].get("filtered_types"), list):
         raise ValueError(f"{rules_path} news.filtered_types must be a list")
+    if "blog" in rules:
+        if not isinstance(rules["blog"].get("signal_tags"), dict):
+            raise ValueError(f"{rules_path} blog.signal_tags must be an object")
+        if not isinstance(rules["blog"].get("filtered_types"), list):
+            raise ValueError(f"{rules_path} blog.filtered_types must be a list")
 
 
 def signal_matches(signal: str, text: str) -> bool:
@@ -95,11 +100,35 @@ def classify_article(article: Article, rules: dict | None = None) -> Classificat
             )
             reason = f"News article is filtered as {filtered_type}." if filtered_type else "News article has no strong long-term signal."
             return Classification("exclude", [], reason)
-        tags: list[str] = []
+        tags = []
         for signal in matched_signals:
             for tag in news_signal_tags[signal]:
                 if tag not in tags:
                     tags.append(tag)
         return Classification("keep", tags, "News article matches strong signal(s): " + ", ".join(matched_signals))
+
+    if path.startswith("/blog/"):
+        blog_rules = rules.get("blog")
+        if not blog_rules:
+            return Classification("exclude", [], "Blog posts are not configured for retention.")
+        # Match on URL + title only: the product blog's body reuses durable words
+        # ("security", "best practices") in marketing copy, but the slug/title
+        # reliably signal whether a post is durable.
+        blog_haystack = f"{article.source_url}\n{article.title}".lower()
+        blog_signal_tags = blog_rules["signal_tags"]
+        matched_signals = [signal for signal in blog_signal_tags if signal_matches(signal, blog_haystack)]
+        if not matched_signals:
+            filtered_type = next(
+                (signal for signal in blog_rules.get("filtered_types", []) if signal_matches(signal, blog_haystack)),
+                "",
+            )
+            reason = f"Blog post is filtered as {filtered_type}." if filtered_type else "Blog post has no strong long-term signal."
+            return Classification("exclude", [], reason)
+        tags = []
+        for signal in matched_signals:
+            for tag in blog_signal_tags[signal]:
+                if tag not in tags:
+                    tags.append(tag)
+        return Classification("keep", tags, "Blog post matches strong signal(s): " + ", ".join(matched_signals))
 
     return Classification("exclude", [], "URL is outside supported Anthropic article paths.")

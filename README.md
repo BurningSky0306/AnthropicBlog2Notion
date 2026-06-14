@@ -4,7 +4,7 @@
 
 ## 它能做什么
 
-- 扫描 Anthropic 官网 `/research`、`/engineering`、`/news` 下的文章
+- 扫描 Anthropic 官网 `/research`、`/engineering`、`/news`，以及 `claude.com/blog`（仅严格保留工程 / 安全 / 实践类，过滤产品营销）下的文章
 - 按内置规则筛选：只保留有长期价值的主题（安全、对齐、可解释性、政策、安全研究、工程经验等），自动过滤产品发布、营销、招聘等噪音
 - 用 AI 把标题和正文翻译成简体中文，并生成一句「推荐理由」
 - 写入 Notion：带标签、发布日期，文章首图作为页面封面
@@ -15,7 +15,7 @@
 
 ```
 Anthropic 官网 sitemap
-      │  发现文章 URL（/research /engineering /news）
+      │  发现文章 URL（anthropic /research /engineering /news + claude.com/blog）
       ▼
    下载网页 → 转成干净的 Markdown
       │
