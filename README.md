@@ -126,3 +126,7 @@ Anthropic 官网 sitemap
 ## 许可证
 
 [MIT](LICENSE)
+
+## 友情链接
+
+[LinuxDo: Where possible begins](https://linux.do/)

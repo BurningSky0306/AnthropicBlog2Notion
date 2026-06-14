@@ -115,6 +115,7 @@
       "biosecurity": ["security", "ai-risk"],
       "nuclear safeguards": ["security", "ai-risk"]
     },
+    "title_only_signals": ["public record", "economic index"],
     "filtered_types": [
       "product announcement",
       "model release",

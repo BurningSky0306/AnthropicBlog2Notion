@@ -45,6 +45,8 @@ def validate_classifier_rules(rules: dict, rules_path: Path) -> None:
         raise ValueError(f"{rules_path} news.signal_tags must be an object")
     if not isinstance(rules["news"].get("filtered_types"), list):
         raise ValueError(f"{rules_path} news.filtered_types must be a list")
+    if "title_only_signals" in rules["news"] and not isinstance(rules["news"]["title_only_signals"], list):
+        raise ValueError(f"{rules_path} news.title_only_signals must be a list")
     if "blog" in rules:
         if not isinstance(rules["blog"].get("signal_tags"), dict):
             raise ValueError(f"{rules_path} blog.signal_tags must be an object")
@@ -91,11 +93,21 @@ def classify_article(article: Article, rules: dict | None = None) -> Classificat
         )
 
     if path.startswith("/news/"):
-        news_signal_tags = rules["news"]["signal_tags"]
-        matched_signals = [signal for signal in news_signal_tags if signal_matches(signal, haystack)]
+        news_rules = rules["news"]
+        news_signal_tags = news_rules["signal_tags"]
+        # A few broad signals (e.g. "public record") also appear in cross-page
+        # boilerplate such as "recommended article" links, so they only count
+        # when they show up in the URL/title; the rest may match the body.
+        title_only = set(news_rules.get("title_only_signals", []))
+        title_haystack = f"{article.source_url}\n{article.title}".lower()
+        matched_signals = [
+            signal
+            for signal in news_signal_tags
+            if signal_matches(signal, title_haystack if signal in title_only else haystack)
+        ]
         if not matched_signals:
             filtered_type = next(
-                (signal for signal in rules["news"]["filtered_types"] if signal_matches(signal, haystack)),
+                (signal for signal in news_rules["filtered_types"] if signal_matches(signal, haystack)),
                 "",
             )
             reason = f"News article is filtered as {filtered_type}." if filtered_type else "News article has no strong long-term signal."
