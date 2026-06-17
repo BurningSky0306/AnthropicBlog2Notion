@@ -34,11 +34,11 @@ def main(argv: list[str] | None = None) -> int:
             return 2
 
     crawl_config = CrawlConfig(base_url=config.anthropic_base_url)
-    urls = discover_article_urls(crawl_config)
+    urls = discover_article_urls(crawl_config, classifier_rules)
     print(f"Discovered article URLs in scope: {len(urls)}")
     if not urls:
         print(
-            "No article URLs discovered; the sitemap shape may have changed or the site is unreachable.",
+            "No article URLs discovered; the configured source pages may have changed or the site is unreachable.",
             file=sys.stderr,
         )
         return 3

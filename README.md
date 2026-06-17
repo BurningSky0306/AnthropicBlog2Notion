@@ -4,8 +4,8 @@
 
 ## 它能做什么
 
-- 扫描 Anthropic 官网 `/research`、`/engineering`、`/news`，以及 `claude.com/blog`（仅严格保留工程 / 安全 / 实践类，过滤产品营销）下的文章
-- 按内置规则筛选：只保留有长期价值的主题（安全、对齐、可解释性、政策、安全研究、工程经验等），自动过滤产品发布、营销、招聘等噪音
+- 只扫描 Anthropic 官网三个源页：`/engineering`、`/research`、`/economic-futures`
+- 抓取这三个源页展示和内嵌数据中的全部文章；其他页面一律不作为发现来源
 - 用 AI 把标题和正文翻译成简体中文，并生成一句「推荐理由」
 - 写入 Notion：带标签、发布日期，文章首图作为页面封面
 - 自动去重：同一篇文章不会重复导入
@@ -14,13 +14,13 @@
 ## 工作原理
 
 ```
-Anthropic 官网 sitemap
-      │  发现文章 URL（anthropic /research /engineering /news + claude.com/blog）
+Anthropic 三个源页
+      │  发现文章 URL（engineering / research / economic-futures）
       ▼
    下载网页 → 转成干净的 Markdown
       │
       ▼
-   规则筛选（只留目标主题，过滤营销 / 产品类）
+   来源页白名单校验与打标签（不做关键词过滤）
       │  保留的文章
       ▼
    AI 翻译为简体中文（标题 + 正文 + 推荐理由）
@@ -29,7 +29,7 @@ Anthropic 官网 sitemap
    写入你的 Notion 数据库（自动去重，首图作封面）
 ```
 
-「抓哪些文章」由**确定性规则**决定，不是交给 AI 即兴判断，所以结果完全可控、可预期；AI 只负责翻译。
+「抓哪些文章」由 `rules/classifier_rules.json` 里的**源页白名单**决定，不是交给 AI 即兴判断，所以结果完全可控、可预期；AI 只负责翻译。
 
 ## 上手教程（GitHub Actions）
 
@@ -120,7 +120,7 @@ Anthropic 官网 sitemap
 
 ## 自定义（可选）
 
-- **想抓更多或更少主题**：编辑 `rules/classifier_rules.json`，增减关键词与保留类别。
+- **想调整抓取来源**：编辑 `rules/classifier_rules.json` 里的 `source_pages` 源页白名单。
 - **想调整翻译风格**：编辑 `prompts/translation_prompt.md`。
 
 ## 许可证

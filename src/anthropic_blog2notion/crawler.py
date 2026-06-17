@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import re
 import sys
-import xml.etree.ElementTree as ET
 from dataclasses import dataclass
 from datetime import datetime
 from urllib.parse import urldefrag, urljoin, urlparse, urlunparse
@@ -14,41 +13,18 @@ from .markdown_utils import children_to_markdown, compact_block
 from .models import Article
 
 
-MAX_SITEMAP_DEPTH = 5
+DEFAULT_SOURCE_PAGE_PATHS = ("/engineering", "/research", "/economic-futures")
+ARTICLE_COMPONENT_CLASS_HINTS = ("ArticleList", "PublicationList", "FeaturedGrid")
 
 
 @dataclass(frozen=True)
 class Source:
-    base_url: str
-    allowed_prefixes: tuple[str, ...]
-    excluded_patterns: tuple[re.Pattern[str], ...]
-
-
-_ANTHROPIC_EXCLUDES = (
-    re.compile(r"^/research/?$"),
-    re.compile(r"^/engineering/?$"),
-    re.compile(r"^/news/?$"),
-    re.compile(r"^/research/team(?:/|$)"),
-)
-# claude.com/blog mixes durable engineering/security writeups with heavy product
-# marketing. Admit only English single-slug posts here; the classifier's strict
-# blog whitelist decides what to keep. Localized copies (/ja/blog, /de/blog, ...)
-# fail the "/blog/" prefix, and category/pagination index pages are excluded.
-_CLAUDE_BLOG_EXCLUDES = (
-    re.compile(r"^/blog/?$"),
-    re.compile(r"^/blog/category(?:/|$)"),
-)
+    page_url: str
 
 
 def default_sources(anthropic_base_url: str = "https://www.anthropic.com") -> tuple[Source, ...]:
-    return (
-        Source(
-            anthropic_base_url.rstrip("/"),
-            ("/research/", "/engineering/", "/news/"),
-            _ANTHROPIC_EXCLUDES,
-        ),
-        Source("https://claude.com", ("/blog/",), _CLAUDE_BLOG_EXCLUDES),
-    )
+    base_url = anthropic_base_url.rstrip("/")
+    return tuple(Source(base_url + path) for path in DEFAULT_SOURCE_PAGE_PATHS)
 
 
 @dataclass(frozen=True)
@@ -69,23 +45,9 @@ def normalize_url(url: str) -> str:
 
 
 def page_base_url(url: str) -> str:
-    """Scheme+host of a page, used to resolve its relative links/images.
-
-    Derived from the page URL (not a global base) so claude.com assets resolve
-    against claude.com and anthropic.com assets against anthropic.com.
-    """
+    """Scheme+host of a page, used to resolve its relative links/images."""
     parsed = urlparse(url)
     return f"{parsed.scheme}://{parsed.netloc}"
-
-
-def url_matches_source(url: str, source: Source) -> bool:
-    parsed = urlparse(normalize_url(url))
-    if parsed.netloc != urlparse(source.base_url).netloc:
-        return False
-    path = parsed.path
-    if any(pattern.match(path) for pattern in source.excluded_patterns):
-        return False
-    return any(path.startswith(prefix) for prefix in source.allowed_prefixes)
 
 
 def fetch_text(url: str, timeout_seconds: int = 30) -> str:
@@ -94,51 +56,159 @@ def fetch_text(url: str, timeout_seconds: int = 30) -> str:
     return response.text
 
 
-def discover_article_urls(config: CrawlConfig) -> list[str]:
+def discover_article_urls(config: CrawlConfig, rules: dict | None = None) -> list[str]:
     ordered: list[str] = []
     seen_urls: set[str] = set()
-    for source in config.sources:
-        found: set[str] = set()
-        sitemap_url = urljoin(source.base_url + "/", "sitemap.xml")
+    source_page_urls = configured_source_page_urls(config, rules)
+    source_page_paths = {urlparse(normalize_url(url)).path for url in source_page_urls}
+    for source in source_page_urls:
         try:
-            _collect_sitemap_urls(sitemap_url, source, config.timeout_seconds, found, seen=set(), depth=0)
-        except Exception as exc:  # one source's sitemap outage must not block the others
-            print(f"WARN sitemap discovery failed for {source.base_url}: {exc}", file=sys.stderr)
-        for url in sorted(found):
+            html = fetch_text(source, config.timeout_seconds)
+        except Exception as exc:  # one source page outage must not block the others
+            print(f"WARN source page discovery failed for {source}: {exc}", file=sys.stderr)
+            continue
+        for url in extract_article_urls_from_source_page(html, source, source_page_paths):
             if url not in seen_urls:
                 seen_urls.add(url)
                 ordered.append(url)
     return ordered
 
 
-def _collect_sitemap_urls(
-    sitemap_url: str,
-    source: Source,
-    timeout_seconds: int,
-    urls: set[str],
-    seen: set[str],
-    depth: int,
-) -> None:
-    if sitemap_url in seen or depth > MAX_SITEMAP_DEPTH:
+def configured_source_page_urls(config: CrawlConfig, rules: dict | None = None) -> tuple[str, ...]:
+    configured = rules.get("source_pages") if rules else None
+    if not configured:
+        return tuple(source.page_url for source in config.sources)
+    urls: list[str] = []
+    for item in configured:
+        url = item.get("url") if isinstance(item, dict) else item
+        if isinstance(url, str) and url.strip():
+            urls.append(normalize_url(url.strip()))
+    return tuple(urls)
+
+
+def extract_article_urls_from_source_page(html: str, page_url: str, source_page_paths: set[str]) -> list[str]:
+    urls: list[str] = []
+    seen: set[str] = set()
+
+    def append(url: str) -> None:
+        normalized = normalize_url(url)
+        if normalized in seen:
+            return
+        seen.add(normalized)
+        urls.append(normalized)
+
+    soup = BeautifulSoup(html, "html.parser")
+    for anchor in soup.find_all("a", href=True):
+        if not anchor_looks_like_article_link(anchor):
+            continue
+        candidate = urljoin(page_url, anchor["href"])
+        if is_same_site_article_candidate(candidate, page_url, source_page_paths):
+            append(candidate)
+
+    for candidate in extract_embedded_post_urls(html, page_url):
+        if is_same_site_article_candidate(candidate, page_url, source_page_paths):
+            append(candidate)
+    return urls
+
+
+def anchor_looks_like_article_link(anchor) -> bool:
+    current = anchor
+    while current is not None:
+        name = getattr(current, "name", None)
+        if name in {"header", "footer", "nav"}:
+            return False
+        classes = " ".join(current.get("class", [])) if hasattr(current, "get") else ""
+        if any(hint in classes for hint in ARTICLE_COMPONENT_CLASS_HINTS):
+            return True
+        current = getattr(current, "parent", None)
+    return False
+
+
+def is_same_site_article_candidate(url: str, page_url: str, source_page_paths: set[str]) -> bool:
+    parsed = urlparse(normalize_url(url))
+    page = urlparse(page_url)
+    if parsed.scheme not in {"http", "https"} or parsed.netloc != page.netloc:
+        return False
+    if parsed.path in source_page_paths or parsed.path in {"/", "/news", "/policy", "/81k-interviews"}:
+        return False
+    if parsed.path.startswith(("/_next/", "/images/", "/research/team/", "/features/")):
+        return False
+    return True
+
+
+def extract_embedded_post_urls(html: str, page_url: str) -> list[str]:
+    soup = BeautifulSoup(html, "html.parser")
+    urls: list[str] = []
+    seen: set[str] = set()
+    for script in soup.find_all("script"):
+        text = script.string or script.get_text()
+        if not text.startswith("self.__next_f.push("):
+            continue
+        for payload in next_data_payloads(text):
+            for content in walk_content_objects(payload):
+                candidate = content_object_url(content, page_url)
+                if candidate and candidate not in seen:
+                    seen.add(candidate)
+                    urls.append(candidate)
+    return urls
+
+
+def next_data_payloads(script_text: str):
+    import json
+
+    try:
+        pushed = json.loads(script_text.removeprefix("self.__next_f.push(").removesuffix(")"))
+    except ValueError:
         return
-    seen.add(sitemap_url)
-    root = ET.fromstring(fetch_text(sitemap_url, timeout_seconds))
-    local_tag = root.tag.rsplit("}", 1)[-1]
-    if local_tag == "sitemapindex":
-        for loc in root.findall(".//{*}loc"):
-            if loc.text and loc.text.strip():
-                _collect_sitemap_urls(loc.text.strip(), source, timeout_seconds, urls, seen, depth + 1)
-        return
-    for loc in root.findall(".//{*}loc"):
-        if loc.text and url_matches_source(loc.text, source):
-            urls.add(normalize_url(loc.text))
+    for item in pushed[1:]:
+        if not isinstance(item, str) or ":" not in item:
+            continue
+        _slot, payload = item.split(":", 1)
+        if not payload.startswith(("[", "{")):
+            continue
+        try:
+            yield json.loads(payload)
+        except ValueError:
+            continue
+
+
+def walk_content_objects(value):
+    if isinstance(value, dict):
+        if value.get("_type") in {"post", "engineeringArticle"} and isinstance(value.get("slug"), dict):
+            yield value
+        for child in value.values():
+            yield from walk_content_objects(child)
+    elif isinstance(value, list):
+        for child in value:
+            yield from walk_content_objects(child)
+
+
+def content_object_url(content: dict, page_url: str) -> str:
+    slug = content.get("slug", {}).get("current", "")
+    if not slug:
+        return ""
+    if content.get("_type") == "engineeringArticle":
+        return urljoin(page_url, f"/engineering/{slug}")
+    directories = [
+        directory.get("value")
+        for directory in content.get("directories", [])
+        if isinstance(directory, dict) and directory.get("value")
+    ]
+    if not directories:
+        return ""
+    return urljoin(page_url, f"/{directories[0]}/{slug}")
 
 
 def fetch_article(url: str, config: CrawlConfig) -> Article:
     html = fetch_text(url, config.timeout_seconds)
     soup = BeautifulSoup(html, "html.parser")
     canonical = soup.find("link", rel="canonical")
-    source_url = normalize_url(canonical.get("href") if canonical and canonical.get("href") else url)
+    requested_url = normalize_url(url)
+    source_url = requested_url
+    if canonical and canonical.get("href"):
+        canonical_url = normalize_url(canonical["href"])
+        if urlparse(canonical_url).netloc == urlparse(requested_url).netloc:
+            source_url = canonical_url
     page_base = page_base_url(source_url)
     article = soup.find("article") or soup.find("main") or soup
     title = soup.find("h1").get_text(" ", strip=True) if soup.find("h1") else ""

@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import json
-import re
 from pathlib import Path
 from urllib.parse import urlparse
 
@@ -31,116 +30,49 @@ def load_classifier_rules(path: str | Path | None = None) -> dict:
 
 
 def validate_classifier_rules(rules: dict, rules_path: Path) -> None:
-    required_top_level = {"engineering", "research", "news"}
+    required_top_level = {"source_pages", "default_tags", "path_tags", "category_tags"}
     missing = sorted(required_top_level - set(rules))
     if missing:
         raise ValueError(f"{rules_path} is missing top-level classifier section(s): {', '.join(missing)}")
-    if not isinstance(rules["engineering"].get("default_tags"), list):
-        raise ValueError(f"{rules_path} engineering.default_tags must be a list")
-    if not isinstance(rules["engineering"].get("postmortem_signals"), list):
-        raise ValueError(f"{rules_path} engineering.postmortem_signals must be a list")
-    if not isinstance(rules["research"].get("retained_categories"), dict):
-        raise ValueError(f"{rules_path} research.retained_categories must be an object")
-    if not isinstance(rules["news"].get("signal_tags"), dict):
-        raise ValueError(f"{rules_path} news.signal_tags must be an object")
-    if not isinstance(rules["news"].get("filtered_types"), list):
-        raise ValueError(f"{rules_path} news.filtered_types must be a list")
-    if "title_only_signals" in rules["news"] and not isinstance(rules["news"]["title_only_signals"], list):
-        raise ValueError(f"{rules_path} news.title_only_signals must be a list")
-    if "blog" in rules:
-        if not isinstance(rules["blog"].get("signal_tags"), dict):
-            raise ValueError(f"{rules_path} blog.signal_tags must be an object")
-        if not isinstance(rules["blog"].get("filtered_types"), list):
-            raise ValueError(f"{rules_path} blog.filtered_types must be a list")
+    if not isinstance(rules["source_pages"], list) or not all(
+        isinstance(item, str) or isinstance(item, dict) and isinstance(item.get("url"), str)
+        for item in rules["source_pages"]
+    ):
+        raise ValueError(f"{rules_path} source_pages must be a list of URLs")
+    if not isinstance(rules["default_tags"], list):
+        raise ValueError(f"{rules_path} default_tags must be a list")
+    if not isinstance(rules["path_tags"], dict):
+        raise ValueError(f"{rules_path} path_tags must be an object")
+    if not isinstance(rules["category_tags"], dict):
+        raise ValueError(f"{rules_path} category_tags must be an object")
 
 
-def signal_matches(signal: str, text: str) -> bool:
-    """Match a signal at a word boundary so 'science' does not hit 'conscience'.
+def append_unique(target: list[str], values: list[str]) -> None:
+    for value in values:
+        if value not in target:
+            target.append(value)
 
-    Anchors only the start of the word (not the end), so 'chemist' still matches
-    'chemistry'/'chemists' while 'election' no longer matches 'selection'.
-    """
-    signal = signal.strip().lower()
-    if not signal:
-        return False
-    return re.search(r"\b" + re.escape(signal), text) is not None
+
+def tags_for_article(article: Article, rules: dict) -> list[str]:
+    path = urlparse(article.source_url).path
+    tags: list[str] = []
+    for path_prefix, prefix_tags in rules["path_tags"].items():
+        if path == path_prefix or path.startswith(path_prefix):
+            append_unique(tags, prefix_tags)
+            break
+    category_key = article.source_category.strip().lower()
+    if category_key in rules["category_tags"]:
+        append_unique(tags, rules["category_tags"][category_key])
+    if not tags:
+        append_unique(tags, rules["default_tags"])
+    return tags
 
 
 def classify_article(article: Article, rules: dict | None = None) -> Classification:
     rules = rules or load_classifier_rules()
-    path = urlparse(article.source_url).path
-    haystack = f"{article.source_url}\n{article.title}\n{article.source_category}\n{article.text_content[:6000]}".lower()
-    category = article.source_category.lower()
-
-    if path.startswith("/engineering/"):
-        tags = list(rules["engineering"]["default_tags"])
-        if any(signal_matches(signal, haystack) for signal in rules["engineering"]["postmortem_signals"]):
-            tags.append("postmortem")
-        return Classification("keep", tags, "Engineering article is always retained by rule.")
-
-    if path.startswith("/research/"):
-        for tag, config in rules["research"]["retained_categories"].items():
-            category_signal = config.get("category_signal", "")
-            text_signals = config.get("text_signals", [])
-            if (category_signal and signal_matches(category_signal, category)) or any(
-                signal_matches(signal, haystack) for signal in text_signals
-            ):
-                return Classification("keep", [tag], f"Research article matches {tag}.")
-        return Classification(
-            "exclude",
-            [],
-            "Research article does not match an explicit retained research category.",
-        )
-
-    if path.startswith("/news/"):
-        news_rules = rules["news"]
-        news_signal_tags = news_rules["signal_tags"]
-        # A few broad signals (e.g. "public record") also appear in cross-page
-        # boilerplate such as "recommended article" links, so they only count
-        # when they show up in the URL/title; the rest may match the body.
-        title_only = set(news_rules.get("title_only_signals", []))
-        title_haystack = f"{article.source_url}\n{article.title}".lower()
-        matched_signals = [
-            signal
-            for signal in news_signal_tags
-            if signal_matches(signal, title_haystack if signal in title_only else haystack)
-        ]
-        if not matched_signals:
-            filtered_type = next(
-                (signal for signal in news_rules["filtered_types"] if signal_matches(signal, haystack)),
-                "",
-            )
-            reason = f"News article is filtered as {filtered_type}." if filtered_type else "News article has no strong long-term signal."
-            return Classification("exclude", [], reason)
-        tags = []
-        for signal in matched_signals:
-            for tag in news_signal_tags[signal]:
-                if tag not in tags:
-                    tags.append(tag)
-        return Classification("keep", tags, "News article matches strong signal(s): " + ", ".join(matched_signals))
-
-    if path.startswith("/blog/"):
-        blog_rules = rules.get("blog")
-        if not blog_rules:
-            return Classification("exclude", [], "Blog posts are not configured for retention.")
-        # Match on URL + title only: the product blog's body reuses durable words
-        # ("security", "best practices") in marketing copy, but the slug/title
-        # reliably signal whether a post is durable.
-        blog_haystack = f"{article.source_url}\n{article.title}".lower()
-        blog_signal_tags = blog_rules["signal_tags"]
-        matched_signals = [signal for signal in blog_signal_tags if signal_matches(signal, blog_haystack)]
-        if not matched_signals:
-            filtered_type = next(
-                (signal for signal in blog_rules.get("filtered_types", []) if signal_matches(signal, blog_haystack)),
-                "",
-            )
-            reason = f"Blog post is filtered as {filtered_type}." if filtered_type else "Blog post has no strong long-term signal."
-            return Classification("exclude", [], reason)
-        tags = []
-        for signal in matched_signals:
-            for tag in blog_signal_tags[signal]:
-                if tag not in tags:
-                    tags.append(tag)
-        return Classification("keep", tags, "Blog post matches strong signal(s): " + ", ".join(matched_signals))
-
-    return Classification("exclude", [], "URL is outside supported Anthropic article paths.")
+    tags = tags_for_article(article, rules)
+    return Classification(
+        "keep",
+        tags,
+        "Article was discovered from a configured source page; keyword filtering is disabled.",
+    )

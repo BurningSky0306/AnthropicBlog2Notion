@@ -1,191 +1,24 @@
 {
-  "engineering": {
-    "default_tags": ["engineering"],
-    "postmortem_signals": [
-      "postmortem",
-      "post-mortem",
-      "incident",
-      "incident review",
-      "issue analysis",
-      "root cause",
-      "root-cause",
-      "retrospective",
-      "lessons learned",
-      "outage"
-    ]
+  "source_pages": [
+    "https://www.anthropic.com/engineering",
+    "https://www.anthropic.com/research",
+    "https://www.anthropic.com/economic-futures"
+  ],
+  "default_tags": ["anthropic"],
+  "path_tags": {
+    "/engineering/": ["engineering"],
+    "/research/": ["research"],
+    "/news/": ["news"]
   },
-  "research": {
-    "retained_categories": {
-      "alignment": {
-        "category_signal": "alignment",
-        "text_signals": [
-          "alignment",
-          "misalignment",
-          "constitutional ai",
-          "scalable oversight",
-          "reward hacking",
-          "alignment faking",
-          "model welfare",
-          "sycophancy"
-        ]
-      },
-      "interpretability": {
-        "category_signal": "interpretability",
-        "text_signals": [
-          "interpretability",
-          "circuits",
-          "monosemanticity",
-          "sparse autoencoder",
-          "superposition",
-          "feature steering",
-          "persona vectors"
-        ]
-      },
-      "economic-research": {
-        "category_signal": "economic research",
-        "text_signals": [
-          "economic research",
-          "economic index",
-          "economic futures",
-          "labor market",
-          "productivity"
-        ]
-      },
-      "societal-impacts": {
-        "category_signal": "societal impacts",
-        "text_signals": [
-          "societal impacts",
-          "elections",
-          "political bias",
-          "values in the wild",
-          "how people use claude",
-          "education report"
-        ]
-      },
-      "frontier-red-team": {
-        "category_signal": "frontier red team",
-        "text_signals": [
-          "frontier red team",
-          "red team",
-          "red-teaming"
-        ]
-      },
-      "safety-research": {
-        "category_signal": "safeguards",
-        "text_signals": [
-          "biosecurity",
-          "bioweapon",
-          "cbrn",
-          "dangerous capabilities",
-          "universal jailbreak",
-          "jailbreak",
-          "constitutional classifiers",
-          "frontier safety",
-          "safety evaluation"
-        ]
-      }
-    }
-  },
-  "news": {
-    "signal_tags": {
-      "responsible scaling policy": ["policy", "ai-risk"],
-      "responsible scaling": ["policy", "ai-risk"],
-      "transparency framework": ["policy"],
-      "transparency hub": ["policy"],
-      "transparency report": ["policy"],
-      "secure development framework": ["policy", "ai-risk"],
-      "frontier model security": ["security", "ai-risk"],
-      "frontier red team": ["frontier-red-team", "ai-risk"],
-      "public record": ["policy", "societal-impacts"],
-      "public input": ["policy"],
-      "regulation": ["policy"],
-      "accountability": ["policy"],
-      "liability": ["policy"],
-      "election": ["policy", "societal-impacts"],
-      "political bias": ["societal-impacts"],
-      "economic index": ["economic-research"],
-      "economic futures": ["economic-research"],
-      "education report": ["societal-impacts"],
-      "how people use claude": ["societal-impacts"],
-      "values in the wild": ["societal-impacts"],
-      "cyber threats": ["security", "safety-research"],
-      "harmful manipulation": ["ai-risk", "safety-research"],
-      "constitutional classifiers": ["safety-research", "ai-risk"],
-      "universal jailbreak": ["safety-research", "ai-risk"],
-      "biosecurity": ["security", "ai-risk"],
-      "nuclear safeguards": ["security", "ai-risk"]
-    },
-    "title_only_signals": ["public record", "economic index"],
-    "filtered_types": [
-      "product announcement",
-      "model release",
-      "launch announcement",
-      "launch",
-      "introducing",
-      "available today",
-      "generally available",
-      "availability",
-      "pricing",
-      "download",
-      "partnership",
-      "partner",
-      "collaboration",
-      "customer story",
-      "case study",
-      "enterprise deployment",
-      "funding",
-      "valuation",
-      "office opening",
-      "hiring",
-      "appointment",
-      "company announcement",
-      "event announcement",
-      "acquisition",
-      "rollout",
-      "early access",
-      "waitlist",
-      "terms",
-      "privacy policy"
-    ]
-  },
-  "blog": {
-    "signal_tags": {
-      "best practices": ["engineering"],
-      "prompt engineering": ["engineering"],
-      "context engineering": ["engineering"],
-      "lessons learned": ["engineering"],
-      "lessons from building": ["engineering"],
-      "ai-native engineering": ["engineering"],
-      "engineering org": ["engineering"],
-      "observability": ["engineering"],
-      "postmortem": ["engineering", "postmortem"],
-      "incident review": ["engineering", "postmortem"],
-      "zero trust": ["security"],
-      "secure source code": ["security"],
-      "secure development": ["security"],
-      "vulnerability": ["security"],
-      "security program": ["security"],
-      "ai-accelerated offense": ["security"],
-      "threat model": ["security"],
-      "red team": ["security"]
-    },
-    "filtered_types": [
-      "introducing",
-      "announcing",
-      "now available",
-      "available now",
-      "new in",
-      "what's new",
-      "redesign",
-      "product guide",
-      "getting started",
-      "pricing",
-      "cowork",
-      "connector",
-      "connectors",
-      "partnership",
-      "webinar",
-      "event"
-    ]
+  "category_tags": {
+    "alignment": ["alignment"],
+    "announcements": ["announcements"],
+    "economic research": ["economic-research"],
+    "interpretability": ["interpretability"],
+    "policy": ["policy"],
+    "research": ["research"],
+    "safeguards": ["safety-research"],
+    "science": ["science"],
+    "societal impacts": ["societal-impacts"]
   }
 }
